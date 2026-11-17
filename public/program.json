@@ -1,0 +1,426 @@
+{
+  "schemaVersion": 1,
+  "programId": "stage-show-2026",
+  "title": "多语言演出样例节目",
+  "generatedAt": "2026-11-17T01:59:16.521Z",
+  "duration": 24,
+  "timeBase": {
+    "source": "video-element",
+    "note": "video is the master clock; audio shards are scheduled against it"
+  },
+  "selectionRules": {
+    "defaultLanguage": "zh-CN",
+    "rolePriority": [
+      "main",
+      "secondary"
+    ],
+    "order": [
+      "track.default === true",
+      "track.language === rules.defaultLanguage",
+      "rolePriority index",
+      "track.id"
+    ],
+    "fallback": {
+      "fr-FR": "en-US",
+      "*": "zh-CN"
+    }
+  },
+  "video": {
+    "id": "main-video",
+    "kind": "video",
+    "label": "舞台主画面",
+    "initUrl": "media/video-main/init.mp4",
+    "shards": [
+      {
+        "index": 0,
+        "url": "media/video-main/1.m4s",
+        "start": 0,
+        "duration": 4
+      },
+      {
+        "index": 1,
+        "url": "media/video-main/2.m4s",
+        "start": 4,
+        "duration": 4
+      },
+      {
+        "index": 2,
+        "url": "media/video-main/3.m4s",
+        "start": 8,
+        "duration": 4
+      },
+      {
+        "index": 3,
+        "url": "media/video-main/4.m4s",
+        "start": 12,
+        "duration": 4
+      },
+      {
+        "index": 4,
+        "url": "media/video-main/5.m4s",
+        "start": 16,
+        "duration": 4
+      },
+      {
+        "index": 5,
+        "url": "media/video-main/6.m4s",
+        "start": 20,
+        "duration": 4
+      }
+    ],
+    "duration": 24
+  },
+  "audioTracks": [
+    {
+      "id": "zh",
+      "kind": "audio",
+      "language": "zh-CN",
+      "label": "普通话解说",
+      "role": "main",
+      "toneHz": 330,
+      "timeline": {
+        "startOffset": 0,
+        "end": 24,
+        "speechMarkers": [
+          {
+            "time": 1.2,
+            "kind": "beep"
+          },
+          {
+            "time": 1.55,
+            "kind": "beep"
+          },
+          {
+            "time": 5.2,
+            "kind": "beep"
+          },
+          {
+            "time": 5.55,
+            "kind": "beep"
+          },
+          {
+            "time": 9.2,
+            "kind": "beep"
+          },
+          {
+            "time": 9.55,
+            "kind": "beep"
+          },
+          {
+            "time": 13.2,
+            "kind": "beep"
+          },
+          {
+            "time": 13.55,
+            "kind": "beep"
+          },
+          {
+            "time": 17.2,
+            "kind": "beep"
+          },
+          {
+            "time": 17.55,
+            "kind": "beep"
+          },
+          {
+            "time": 21.2,
+            "kind": "beep"
+          },
+          {
+            "time": 21.55,
+            "kind": "beep"
+          }
+        ]
+      },
+      "shards": [
+        {
+          "index": 0,
+          "url": "media/audio-zh/0.wav",
+          "start": 0,
+          "duration": 4
+        },
+        {
+          "index": 1,
+          "url": "media/audio-zh/1.wav",
+          "start": 4,
+          "duration": 4
+        },
+        {
+          "index": 2,
+          "url": "media/audio-zh/2.wav",
+          "start": 8,
+          "duration": 4
+        },
+        {
+          "index": 3,
+          "url": "media/audio-zh/3.wav",
+          "start": 12,
+          "duration": 4
+        },
+        {
+          "index": 4,
+          "url": "media/audio-zh/4.wav",
+          "start": 16,
+          "duration": 4
+        },
+        {
+          "index": 5,
+          "url": "media/audio-zh/5.wav",
+          "start": 20,
+          "duration": 4
+        }
+      ]
+    },
+    {
+      "id": "en",
+      "kind": "audio",
+      "language": "en-US",
+      "label": "English Narration",
+      "role": "main",
+      "toneHz": 440,
+      "timeline": {
+        "startOffset": 0,
+        "end": 24,
+        "speechMarkers": [
+          {
+            "time": 1.2,
+            "kind": "beep"
+          },
+          {
+            "time": 1.55,
+            "kind": "beep"
+          },
+          {
+            "time": 5.2,
+            "kind": "beep"
+          },
+          {
+            "time": 5.55,
+            "kind": "beep"
+          },
+          {
+            "time": 9.2,
+            "kind": "beep"
+          },
+          {
+            "time": 9.55,
+            "kind": "beep"
+          },
+          {
+            "time": 13.2,
+            "kind": "beep"
+          },
+          {
+            "time": 13.55,
+            "kind": "beep"
+          },
+          {
+            "time": 17.2,
+            "kind": "beep"
+          },
+          {
+            "time": 17.55,
+            "kind": "beep"
+          },
+          {
+            "time": 21.2,
+            "kind": "beep"
+          },
+          {
+            "time": 21.55,
+            "kind": "beep"
+          }
+        ]
+      },
+      "shards": [
+        {
+          "index": 0,
+          "url": "media/audio-en/0.wav",
+          "start": 0,
+          "duration": 4
+        },
+        {
+          "index": 1,
+          "url": "media/audio-en/1.wav",
+          "start": 4,
+          "duration": 4
+        },
+        {
+          "index": 2,
+          "url": "media/audio-en/2.wav",
+          "start": 8,
+          "duration": 4
+        },
+        {
+          "index": 3,
+          "url": "media/audio-en/3.wav",
+          "start": 12,
+          "duration": 4
+        },
+        {
+          "index": 4,
+          "url": "media/audio-en/4.wav",
+          "start": 16,
+          "duration": 4
+        },
+        {
+          "index": 5,
+          "url": "media/audio-en/5.wav",
+          "start": 20,
+          "duration": 4
+        }
+      ]
+    },
+    {
+      "id": "ja",
+      "kind": "audio",
+      "language": "ja-JP",
+      "label": "日本語解説",
+      "role": "secondary",
+      "toneHz": 554,
+      "timeline": {
+        "startOffset": 6,
+        "end": 20,
+        "speechMarkers": [
+          {
+            "time": 9.2,
+            "kind": "beep"
+          },
+          {
+            "time": 9.55,
+            "kind": "beep"
+          },
+          {
+            "time": 13.2,
+            "kind": "beep"
+          },
+          {
+            "time": 13.55,
+            "kind": "beep"
+          },
+          {
+            "time": 17.2,
+            "kind": "beep"
+          },
+          {
+            "time": 17.55,
+            "kind": "beep"
+          }
+        ]
+      },
+      "shards": [
+        {
+          "index": 2,
+          "url": "media/audio-ja/2.wav",
+          "start": 8,
+          "duration": 4
+        },
+        {
+          "index": 3,
+          "url": "media/audio-ja/3.wav",
+          "start": 12,
+          "duration": 4
+        },
+        {
+          "index": 4,
+          "url": "media/audio-ja/4.wav",
+          "start": 16,
+          "duration": 4
+        }
+      ]
+    },
+    {
+      "id": "fr",
+      "kind": "audio",
+      "language": "fr-FR",
+      "label": "Commentaire français",
+      "role": "secondary",
+      "toneHz": 659,
+      "timeline": {
+        "startOffset": 0,
+        "end": 24,
+        "speechMarkers": [
+          {
+            "time": 1.2,
+            "kind": "beep"
+          },
+          {
+            "time": 1.55,
+            "kind": "beep"
+          },
+          {
+            "time": 5.2,
+            "kind": "beep"
+          },
+          {
+            "time": 5.55,
+            "kind": "beep"
+          },
+          {
+            "time": 9.2,
+            "kind": "beep"
+          },
+          {
+            "time": 9.55,
+            "kind": "beep"
+          },
+          {
+            "time": 17.2,
+            "kind": "beep"
+          },
+          {
+            "time": 17.55,
+            "kind": "beep"
+          },
+          {
+            "time": 21.2,
+            "kind": "beep"
+          },
+          {
+            "time": 21.55,
+            "kind": "beep"
+          }
+        ]
+      },
+      "shards": [
+        {
+          "index": 0,
+          "url": "media/audio-fr/0.wav",
+          "start": 0,
+          "duration": 4
+        },
+        {
+          "index": 1,
+          "url": "media/audio-fr/1.wav",
+          "start": 4,
+          "duration": 4
+        },
+        {
+          "index": 2,
+          "url": "media/audio-fr/2.wav",
+          "start": 8,
+          "duration": 4
+        },
+        {
+          "index": 3,
+          "url": "media/audio-fr/3.wav",
+          "start": 12,
+          "duration": 4,
+          "missing": true
+        },
+        {
+          "index": 4,
+          "url": "media/audio-fr/4.wav",
+          "start": 16,
+          "duration": 4
+        },
+        {
+          "index": 5,
+          "url": "media/audio-fr/5.wav",
+          "start": 20,
+          "duration": 4
+        }
+      ]
+    }
+  ]
+}

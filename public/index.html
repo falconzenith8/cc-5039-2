@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>多语言演出播放内核 · 诊断台</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 14px/1.5 system-ui, "PingFang SC", "Microsoft YaHei", sans-serif;
+         background: #0b1020; color: #e6ecf7; }
+  header { padding: 16px 24px; border-bottom: 1px solid #1d2740; }
+  h1 { font-size: 17px; margin: 0 0 4px; }
+  .sub { color: #8ea0c0; font-size: 12px; }
+  main { display: grid; grid-template-columns: 360px 1fr; gap: 20px; padding: 20px 24px; }
+  .card { background: #121a2e; border: 1px solid #1f2c4a; border-radius: 10px; padding: 16px; }
+  .card h2 { font-size: 13px; margin: 0 0 12px; color: #9fb4d8; text-transform: uppercase; letter-spacing: .06em; }
+  video { width: 100%; background: #000; border-radius: 8px; display: block; }
+  .track { display: block; width: 100%; text-align: left; margin-bottom: 8px; padding: 10px 12px;
+           border: 1px solid #26355a; border-radius: 8px; background: #16203a; color: inherit;
+           cursor: pointer; font: inherit; }
+  .track:hover { border-color: #4f8cff; }
+  .track.selected { border-color: #4f8cff; box-shadow: inset 3px 0 0 #4f8cff; }
+  .track .meta { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; color: #8ea0c0; margin-top: 4px; }
+  .badge { font-size: 11px; padding: 1px 7px; border-radius: 999px; white-space: nowrap; }
+  .badge.effective { background: #14382a; color: #5fe0a8; }
+  .badge.fallback  { background: #3d2c12; color: #f0b45a; }
+  .badge.gap       { background: #3d1620; color: #ff7a90; }
+  .badge.idle      { background: #1e2942; color: #7e90b0; }
+  .controls { display: flex; gap: 8px; margin: 12px 0; }
+  button.ctl { padding: 8px 18px; border-radius: 8px; border: 1px solid #2f4068; background: #1b2947;
+               color: inherit; font: inherit; cursor: pointer; }
+  button.ctl.primary { background: #2456d6; border-color: #2f63e8; }
+  .status { font-size: 12px; color: #c6d3ec; background: #0e1626; border: 1px solid #1f2c4a;
+            border-radius: 8px; padding: 10px; margin-top: 8px; }
+  .status .row { display: flex; justify-content: space-between; gap: 10px; padding: 2px 0; }
+  .metric { font-variant-numeric: tabular-nums; }
+  .shard-row { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+  .cell { font-size: 11px; padding: 3px 7px; border-radius: 5px; background: #1e2942; font-variant-numeric: tabular-nums; }
+  .cell.ready { background: #14382a; color: #5fe0a8; }
+  .cell.loading { background: #1d3358; color: #8ab4ff; }
+  .cell.error { background: #3d1620; color: #ff7a90; }
+  .cell.scheduled { outline: 1px solid #4f8cff; }
+  #log { height: 260px; overflow: auto; font: 11px/1.5 ui-monospace, monospace; background: #0a1120;
+         border-radius: 8px; padding: 10px; }
+  #log .line { white-space: pre-wrap; }
+  #log .line.warn { color: #f0b45a; }
+  #log .line.err { color: #ff7a90; }
+  .delta-good { color: #5fe0a8; } .delta-warn { color: #f0b45a; } .delta-bad { color: #ff7a90; }
+</style>
+</head>
+<body>
+<header>
+  <h1 id="title">演出节目多语言播放内核</h1>
+  <div class="sub">视频为唯一主时钟 · 音频分片按清单时间偏移调度 · 切换不重叠、不归零</div>
+</header>
+<main>
+  <section class="card">
+    <h2>轨道（清单声明，非浏览器原生下拉）</h2>
+    <div id="tracks"></div>
+    <div class="controls">
+      <button class="ctl primary" id="play">播放</button>
+      <button class="ctl" id="pause">暂停</button>
+    </div>
+    <div class="status" id="status"></div>
+  </section>
+
+  <section>
+    <div class="card">
+      <h2>画面（MSE 分片，主时钟）</h2>
+      <video id="video" muted playsinline></video>
+      <div class="status" style="margin-top:10px">
+        <div class="row"><span>视频已缓冲</span><span class="metric" id="video-buf">—</span></div>
+        <div class="row"><span>当前节目位置</span><span class="metric" id="position">0.000s</span></div>
+        <div class="row"><span>实测音画差（平均 / 峰值）</span>
+          <span class="metric" id="drift">—</span></div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <h2>实际分片缓冲与调度（按轨道）</h2>
+      <div id="buffers"></div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <h2>内核事件</h2>
+      <div id="log"></div>
+    </div>
+  </section>
+</main>
+
+<script type="module" src="./kernel/ui.mjs"></script>
+</body>
+</html>
