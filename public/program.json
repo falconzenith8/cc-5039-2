@@ -2,17 +2,20 @@
   "schemaVersion": 1,
   "programId": "stage-show-2026",
   "title": "多语言演出样例节目",
-  "generatedAt": "2026-11-17T04:50:32.079Z",
+  "generatedAt": "2026-11-18T02:32:40.016Z",
   "duration": 24,
   "timeBase": {
     "source": "video-element",
-    "note": "video is the master clock; audio shards are scheduled against it"
+    "note": "video is the master clock; audio shards and subtitle cues are scheduled against it"
   },
   "selectionRules": {
     "defaultLanguage": "zh-CN",
+    "defaultAudioTrack": "zh",
+    "defaultSubtitleTrack": null,
     "rolePriority": [
       "main",
-      "secondary"
+      "secondary",
+      "description"
     ],
     "order": [
       "track.default === true",
@@ -24,6 +27,15 @@
       "fr-FR": "en-US",
       "*": "zh-CN"
     }
+  },
+  "combinationRules": {
+    "disallowed": [
+      {
+        "audioRole": "description",
+        "subtitleRole": "dialogue",
+        "reason": "描述性音频已包含场景解说，禁止与完整对白字幕同时启用"
+      }
+    ]
   },
   "video": {
     "id": "main-video",
@@ -418,6 +430,243 @@
           "index": 5,
           "url": "media/audio-fr/5.wav",
           "start": 20,
+          "duration": 4
+        }
+      ]
+    },
+    {
+      "id": "zh-desc",
+      "kind": "audio",
+      "language": "zh-CN",
+      "label": "普通话描述性音频",
+      "role": "description",
+      "toneHz": 220,
+      "timeline": {
+        "startOffset": 0,
+        "end": 24,
+        "speechMarkers": [
+          {
+            "time": 1.2,
+            "kind": "beep"
+          },
+          {
+            "time": 1.55,
+            "kind": "beep"
+          },
+          {
+            "time": 5.2,
+            "kind": "beep"
+          },
+          {
+            "time": 5.55,
+            "kind": "beep"
+          },
+          {
+            "time": 9.2,
+            "kind": "beep"
+          },
+          {
+            "time": 9.55,
+            "kind": "beep"
+          },
+          {
+            "time": 13.2,
+            "kind": "beep"
+          },
+          {
+            "time": 13.55,
+            "kind": "beep"
+          },
+          {
+            "time": 17.2,
+            "kind": "beep"
+          },
+          {
+            "time": 17.55,
+            "kind": "beep"
+          },
+          {
+            "time": 21.2,
+            "kind": "beep"
+          },
+          {
+            "time": 21.55,
+            "kind": "beep"
+          }
+        ]
+      },
+      "shards": [
+        {
+          "index": 0,
+          "url": "media/audio-zh-desc/0.wav",
+          "start": 0,
+          "duration": 4
+        },
+        {
+          "index": 1,
+          "url": "media/audio-zh-desc/1.wav",
+          "start": 4,
+          "duration": 4
+        },
+        {
+          "index": 2,
+          "url": "media/audio-zh-desc/2.wav",
+          "start": 8,
+          "duration": 4
+        },
+        {
+          "index": 3,
+          "url": "media/audio-zh-desc/3.wav",
+          "start": 12,
+          "duration": 4
+        },
+        {
+          "index": 4,
+          "url": "media/audio-zh-desc/4.wav",
+          "start": 16,
+          "duration": 4
+        },
+        {
+          "index": 5,
+          "url": "media/audio-zh-desc/5.wav",
+          "start": 20,
+          "duration": 4
+        }
+      ]
+    }
+  ],
+  "subtitleTracks": [
+    {
+      "id": "zh-dialogue",
+      "kind": "subtitle",
+      "language": "zh-CN",
+      "label": "普通话完整对白",
+      "role": "dialogue",
+      "timeline": {
+        "startOffset": 0,
+        "end": 24
+      },
+      "shards": [
+        {
+          "index": 0,
+          "url": "media/subs-zh-dialogue/0.json",
+          "start": 0,
+          "duration": 4
+        },
+        {
+          "index": 1,
+          "url": "media/subs-zh-dialogue/1.json",
+          "start": 4,
+          "duration": 4
+        },
+        {
+          "index": 2,
+          "url": "media/subs-zh-dialogue/2.json",
+          "start": 8,
+          "duration": 4
+        },
+        {
+          "index": 3,
+          "url": "media/subs-zh-dialogue/3.json",
+          "start": 12,
+          "duration": 4
+        },
+        {
+          "index": 4,
+          "url": "media/subs-zh-dialogue/4.json",
+          "start": 16,
+          "duration": 4
+        },
+        {
+          "index": 5,
+          "url": "media/subs-zh-dialogue/5.json",
+          "start": 20,
+          "duration": 4
+        }
+      ]
+    },
+    {
+      "id": "zh-forced",
+      "kind": "subtitle",
+      "language": "zh-CN",
+      "label": "普通话强制字幕",
+      "role": "forced",
+      "timeline": {
+        "startOffset": 0,
+        "end": 24
+      },
+      "shards": [
+        {
+          "index": 0,
+          "url": "media/subs-zh-forced/0.json",
+          "start": 0,
+          "duration": 4
+        },
+        {
+          "index": 1,
+          "url": "media/subs-zh-forced/1.json",
+          "start": 4,
+          "duration": 4
+        },
+        {
+          "index": 2,
+          "url": "media/subs-zh-forced/2.json",
+          "start": 8,
+          "duration": 4
+        },
+        {
+          "index": 3,
+          "url": "media/subs-zh-forced/3.json",
+          "start": 12,
+          "duration": 4
+        },
+        {
+          "index": 4,
+          "url": "media/subs-zh-forced/4.json",
+          "start": 16,
+          "duration": 4
+        },
+        {
+          "index": 5,
+          "url": "media/subs-zh-forced/5.json",
+          "start": 20,
+          "duration": 4
+        }
+      ]
+    },
+    {
+      "id": "en-forced",
+      "kind": "subtitle",
+      "language": "en-US",
+      "label": "English Forced Captions",
+      "role": "forced",
+      "timeline": {
+        "startOffset": 0,
+        "end": 16
+      },
+      "shards": [
+        {
+          "index": 0,
+          "url": "media/subs-en-forced/0.json",
+          "start": 0,
+          "duration": 4
+        },
+        {
+          "index": 1,
+          "url": "media/subs-en-forced/1.json",
+          "start": 4,
+          "duration": 4
+        },
+        {
+          "index": 2,
+          "url": "media/subs-en-forced/2.json",
+          "start": 8,
+          "duration": 4
+        },
+        {
+          "index": 3,
+          "url": "media/subs-en-forced/3.json",
+          "start": 12,
           "duration": 4
         }
       ]

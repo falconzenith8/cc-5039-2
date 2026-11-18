@@ -47,6 +47,18 @@
   #log .line.warn { color: #f0b45a; }
   #log .line.err { color: #ff7a90; }
   .delta-good { color: #5fe0a8; } .delta-warn { color: #f0b45a; } .delta-bad { color: #ff7a90; }
+  .stage { position: relative; }
+  #subtitle-overlay { position: absolute; left: 0; right: 0; bottom: 14px; padding: 0 16px;
+    text-align: center; pointer-events: none; text-shadow: 0 1px 3px #000, 0 0 8px #000; }
+  #subtitle-overlay .subtitle-line { font-size: 17px; font-weight: 600; color: #fff; line-height: 1.5; }
+  #notice { display: none; margin-top: 10px; font-size: 12px; border-radius: 8px; padding: 9px 11px;
+            border: 1px solid #5a3a18; background: #2e2110; color: #f0b45a; }
+  #notice.show { display: block; }
+  #notice.rejected { border-color: #6e2433; background: #33151d; color: #ff7a90; }
+  #seekbar { width: 100%; margin-top: 10px; accent-color: #4f8cff; }
+  .group-label { font-size: 11px; color: #5d6f92; text-transform: uppercase; letter-spacing: .08em;
+                 margin: 14px 0 8px; }
+  .track .role-tag { font-size: 11px; color: #8ab4ff; }
 </style>
 </head>
 <body>
@@ -57,7 +69,11 @@
 <main>
   <section class="card">
     <h2>轨道（清单声明，非浏览器原生下拉）</h2>
+    <div class="group-label">音频轨 · 按 语言 + 角色 区分</div>
     <div id="tracks"></div>
+    <div class="group-label">字幕轨 · 关闭字幕只清除文字，不停止音频</div>
+    <div id="subtitle-tracks"></div>
+    <div id="notice"></div>
     <div class="controls">
       <button class="ctl primary" id="play">播放</button>
       <button class="ctl" id="pause">暂停</button>
@@ -68,7 +84,11 @@
   <section>
     <div class="card">
       <h2>画面（MSE 分片，主时钟）</h2>
-      <video id="video" muted playsinline></video>
+      <div class="stage">
+        <video id="video" muted playsinline></video>
+        <div id="subtitle-overlay"></div>
+      </div>
+      <input id="seekbar" type="range" min="0" max="24" step="0.1" value="0" aria-label="节目进度">
       <div class="status" style="margin-top:10px">
         <div class="row"><span>视频已缓冲</span><span class="metric" id="video-buf">—</span></div>
         <div class="row"><span>当前节目位置</span><span class="metric" id="position">0.000s</span></div>

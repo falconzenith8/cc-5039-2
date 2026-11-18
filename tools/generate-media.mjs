@@ -6,7 +6,11 @@ import { execFileSync } from 'node:child_process';
 import { mkdirSync, writeFileSync, rmSync, existsSync, readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import ffmpegPath from 'ffmpeg-static';
+import ffmpegStatic from 'ffmpeg-static';
+
+// Allow an externally provided ffmpeg (e.g. a Linux static build when the
+// npm package's bundled binary targets another platform).
+const ffmpegPath = process.env.FFMPEG_PATH || ffmpegStatic;
 
 const ROOT = dirname(fileURLToPath(import.meta.url));
 const PUBLIC = join(ROOT, '..', 'public');
@@ -21,6 +25,9 @@ const TRACKS = [
   { id: 'en', language: 'en-US', name: 'English Narration', role: 'main', tone: 440, offset: 0, end: 24 },
   { id: 'ja', language: 'ja-JP', name: '日本語解説', role: 'secondary', tone: 554, offset: 6, end: 20 },
   { id: 'fr', language: 'fr-FR', name: 'Commentaire français', role: 'secondary', tone: 659, offset: 0, end: 24, missing: 3 },
+  // Same language (zh-CN) as the main narration but a different role: selection
+  // must key on (language, role), never merge by language name alone.
+  { id: 'zh-desc', language: 'zh-CN', name: '普通话描述性音频', role: 'description', tone: 220, offset: 0, end: 24 },
 ];
 
 function writeWav(path, samples) {
@@ -102,6 +109,76 @@ function buildAudio() {
   return manifestTracks;
 }
 
+// Subtitle shards are standalone JSON files on the same 4s program grid as the
+// audio shards. Each cue carries absolute program start/end times, so a cue is
+// rendered from the video clock and survives crossing a shard boundary: the
+// SubtitleEngine keeps an active cue until its own declared end, even when the
+// next shard has not been fetched yet.
+const SUBTITLE_TRACKS = [
+  {
+    id: 'zh-dialogue', language: 'zh-CN', name: '普通话完整对白', role: 'dialogue', offset: 0, end: 24,
+    cues: [
+      { start: 1.0, end: 3.6, text: '【对白】欢迎来到今晚的演出' },
+      // Deliberately crosses the 4s shard boundary.
+      { start: 3.4, end: 5.8, text: '【对白】灯光渐暗，序曲响起' },
+      { start: 7.2, end: 9.9, text: '【对白】第一幕：城市清晨' },
+      { start: 11.1, end: 13.8, text: '【对白】舞者从舞台左侧入场' },
+      { start: 15.2, end: 17.9, text: '【对白】合唱段落即将开始' },
+      { start: 19.1, end: 21.7, text: '【对白】灯光转向蓝色' },
+      { start: 22.0, end: 23.8, text: '【对白】感谢观看，晚安' },
+    ],
+  },
+  {
+    id: 'zh-forced', language: 'zh-CN', name: '普通话强制字幕', role: 'forced', offset: 0, end: 24,
+    cues: [
+      { start: 2.0, end: 4.2, text: '【强制】(外语歌词) 夜未央' },
+      { start: 10.0, end: 12.4, text: '【强制】(画外音) 三，二，一' },
+      { start: 18.0, end: 20.4, text: '【强制】(字幕) 终章' },
+    ],
+  },
+  {
+    // Ends early (16s): at later positions the UI must show it as unavailable
+    // and selecting it must produce an explicit notice, not a stale caption.
+    id: 'en-forced', language: 'en-US', name: 'English Forced Captions', role: 'forced', offset: 0, end: 16,
+    cues: [
+      { start: 2.0, end: 4.2, text: '[FORCED] (foreign lyrics) Endless Night' },
+      { start: 10.0, end: 12.4, text: '[FORCED] (voice-over) Three, two, one' },
+      { start: 14.0, end: 15.8, text: '[FORCED] Final chapter begins' },
+    ],
+  },
+];
+
+function buildSubtitles() {
+  const manifestTracks = [];
+  for (const track of SUBTITLE_TRACKS) {
+    const dir = join(MEDIA, `subs-${track.id}`);
+    mkdirSync(dir, { recursive: true });
+    const firstIndex = Math.ceil(track.offset / SHARD);
+    const lastIndex = Math.ceil(track.end / SHARD) - 1;
+    const shards = [];
+    for (let idx = firstIndex; idx <= lastIndex; idx++) {
+      const shardStart = idx * SHARD;
+      const shardEnd = Math.min((idx + 1) * SHARD, track.end);
+      const cues = track.cues
+        .filter((c) => c.start < shardEnd && c.end > shardStart)
+        .map((c) => ({ start: c.start, end: c.end, text: c.text }));
+      const url = `media/subs-${track.id}/${idx}.json`;
+      writeFileSync(join(dir, `${idx}.json`), JSON.stringify({ shardIndex: idx, cues }, null, 2));
+      shards.push({ index: idx, url, start: shardStart, duration: shardEnd - shardStart });
+    }
+    manifestTracks.push({
+      id: track.id,
+      kind: 'subtitle',
+      language: track.language,
+      label: track.name,
+      role: track.role,
+      timeline: { startOffset: track.offset, end: track.end },
+      shards,
+    });
+  }
+  return manifestTracks;
+}
+
 function buildVideo() {
   const dir = join(MEDIA, 'video-main');
   mkdirSync(dir, { recursive: true });
@@ -169,6 +246,7 @@ rmSync(MEDIA, { recursive: true, force: true });
 mkdirSync(MEDIA, { recursive: true });
 const video = buildVideo();
 const audio = buildAudio();
+const subtitles = buildSubtitles();
 
 const manifest = {
   schemaVersion: 1,
@@ -176,10 +254,12 @@ const manifest = {
   title: '多语言演出样例节目',
   generatedAt: new Date().toISOString(),
   duration: PROGRAM_DURATION,
-  timeBase: { source: 'video-element', note: 'video is the master clock; audio shards are scheduled against it' },
+  timeBase: { source: 'video-element', note: 'video is the master clock; audio shards and subtitle cues are scheduled against it' },
   selectionRules: {
     defaultLanguage: 'zh-CN',
-    rolePriority: ['main', 'secondary'],
+    defaultAudioTrack: 'zh',
+    defaultSubtitleTrack: null,
+    rolePriority: ['main', 'secondary', 'description'],
     // Explicit, declarative rule. File/array position is never used to infer
     // language, and shard file names carry no language meaning.
     order: ['track.default === true', 'track.language === rules.defaultLanguage', 'rolePriority index', 'track.id'],
@@ -188,8 +268,17 @@ const manifest = {
       '*': 'zh-CN',
     },
   },
+  // Role-level compatibility, independent of language: descriptive audio already
+  // narrates the scene, so full dialogue captions duplicate it. Forced captions
+  // remain allowed because they only translate on-screen text/lyrics.
+  combinationRules: {
+    disallowed: [
+      { audioRole: 'description', subtitleRole: 'dialogue', reason: '描述性音频已包含场景解说，禁止与完整对白字幕同时启用' },
+    ],
+  },
   video,
   audioTracks: audio,
+  subtitleTracks: subtitles,
 };
 writeFileSync(join(PUBLIC, 'program.json'), JSON.stringify(manifest, null, 2));
-console.log(`generated ${video.shards.length} video shards, ${audio.length} audio tracks under ${MEDIA}`);
+console.log(`generated ${video.shards.length} video shards, ${audio.length} audio tracks, ${subtitles.length} subtitle tracks under ${MEDIA}`);

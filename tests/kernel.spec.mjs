@@ -103,16 +103,20 @@ test.describe('manifest parsing and declarative default selection', () => {
         languages: m.audioTracks.map((t) => t.language),
         roles: m.audioTracks.map((t) => t.role),
         offsets: m.audioTracks.map((t) => t.timeline.startOffset),
+        subtitleLanguages: m.subtitleTracks.map((t) => `${t.language}:${t.role}`),
         defaultLang: m.selectionRules.defaultLanguage,
         selected: k.selectedTrack?.language,
         reason: k.statusReason,
       };
     });
-    expect(info.languages).toEqual(['zh-CN', 'en-US', 'ja-JP', 'fr-FR']);
+    expect(info.languages).toEqual(['zh-CN', 'en-US', 'ja-JP', 'fr-FR', 'zh-CN']);
+    // Two zh-CN audio tracks coexist because their roles differ.
+    expect(info.roles).toContain('description');
+    expect(info.subtitleLanguages).toEqual(['zh-CN:dialogue', 'zh-CN:forced', 'en-US:forced']);
     expect(info.selected).toBe(info.defaultLang);
     expect(info.reason).toContain('language rule match');
     // ja starts at 6s: explicit offset, not guessed from being the third file
-    expect(info.offsets).toEqual([0, 0, 6, 0]);
+    expect(info.offsets).toEqual([0, 0, 6, 0, 0]);
   });
 
   test('rejects manifests missing explicit language or timeline declarations', async ({ page }) => {
@@ -120,8 +124,8 @@ test.describe('manifest parsing and declarative default selection', () => {
     const result = await page.evaluate(() => {
       const mod = globalThis.__kernelRules;
       const good = globalThis.__kernel.manifest;
-      const bad1 = { schemaVersion: 1, video: good.video, audioTracks: [{ id: 'x' /* no language */, timeline: { startOffset: 0, end: 1 }, shards: [] }] };
-      const bad2 = { schemaVersion: 1, video: good.video, audioTracks: [{ id: 'y', language: 'xx', timeline: { startOffset: 2, end: 1 }, shards: [] }] };
+      const bad1 = { schemaVersion: 1, video: good.video, subtitleTracks: [], audioTracks: [{ id: 'x' /* no language */, timeline: { startOffset: 0, end: 1 }, shards: [] }] };
+      const bad2 = { schemaVersion: 1, video: good.video, subtitleTracks: [], audioTracks: [{ id: 'y', language: 'xx', role: 'main', timeline: { startOffset: 2, end: 1 }, shards: [] }] };
       const out = [];
       for (const b of [bad1, bad2]) {
         try { mod.parseManifest(b); out.push('accepted(bad!)'); } catch (e) { out.push(e.name); }
@@ -129,11 +133,19 @@ test.describe('manifest parsing and declarative default selection', () => {
       // reordered manifest: default rule must beat array position
       const reordered = { ...good, audioTracks: [...good.audioTracks].reverse() };
       out.push(mod.selectDefaultTrack(reordered).track.language);
+      // same language, different roles must parse; a duplicated (lang, role)
+      // pair must still be rejected rather than merged by language name.
+      const dupRole = { ...good, audioTracks: [
+        ...good.audioTracks,
+        { id: 'zh2', kind: 'audio', language: 'zh-CN', role: 'main', timeline: { startOffset: 0, end: 2 }, shards: [{ start: 0, duration: 2 }] },
+      ] };
+      try { mod.parseManifest(dupRole); out.push('accepted(bad!)'); } catch (e) { out.push(e.name); }
       return out;
     });
     expect(result[0]).toBe('ManifestError');
     expect(result[1]).toBe('ManifestError');
     expect(result[2]).toBe('zh-CN'); // rule-based, never "first file"
+    expect(result[3]).toBe('ManifestError');
   });
 });
 

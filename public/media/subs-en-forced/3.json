@@ -1,0 +1,15 @@
+{
+  "shardIndex": 3,
+  "cues": [
+    {
+      "start": 10,
+      "end": 12.4,
+      "text": "[FORCED] (voice-over) Three, two, one"
+    },
+    {
+      "start": 14,
+      "end": 15.8,
+      "text": "[FORCED] Final chapter begins"
+    }
+  ]
+}

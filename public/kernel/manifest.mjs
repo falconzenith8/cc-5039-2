@@ -1,11 +1,43 @@
-// Manifest parsing, validation and declarative default-track selection.
+// Manifest parsing, validation and declarative default selection.
 // Language/role/track identity come only from manifest fields; array position
 // and shard file names are never used to infer a language.
+//
+// Two tracks may share a language when their roles differ (e.g. zh-CN main
+// narration and zh-CN descriptive audio, or zh-CN dialogue and forced
+// subtitles): identity is the (kind, language, role) triple, never the
+// language name alone.
 
 export class ManifestError extends Error {
   constructor(message) {
     super(message);
     this.name = 'ManifestError';
+  }
+}
+
+const AUDIO_ROLES = ['main', 'secondary', 'description'];
+const SUBTITLE_ROLES = ['dialogue', 'forced'];
+
+function validateTrack(track, kind) {
+  if (!track.id || !track.language || !track.role) {
+    throw new ManifestError(`${kind} track missing id/language/role: ${JSON.stringify(track)}`);
+  }
+  const knownRoles = kind === 'audio' ? AUDIO_ROLES : SUBTITLE_ROLES;
+  if (!knownRoles.includes(track.role)) {
+    throw new ManifestError(`${kind} track ${track.id} has unknown role ${track.role}`);
+  }
+  if (!track.timeline || typeof track.timeline.startOffset !== 'number' || typeof track.timeline.end !== 'number') {
+    throw new ManifestError(`track ${track.id} must declare explicit timeline startOffset/end`);
+  }
+  if (track.timeline.end <= track.timeline.startOffset) {
+    throw new ManifestError(`track ${track.id} has empty timeline`);
+  }
+  if (!Array.isArray(track.shards) || track.shards.length === 0) {
+    throw new ManifestError(`track ${track.id} declares no shards`);
+  }
+  for (const shard of track.shards) {
+    if (typeof shard.start !== 'number' || typeof shard.duration !== 'number') {
+      throw new ManifestError(`track ${track.id} shard missing explicit start/duration`);
+    }
   }
 }
 
@@ -18,27 +50,31 @@ export function parseManifest(raw) {
   if (!m.video?.initUrl || !Array.isArray(m.video.shards) || m.video.shards.length === 0) {
     throw new ManifestError('manifest must declare a sharded video track');
   }
-  const seenLanguages = new Set();
+  if (!Array.isArray(m.subtitleTracks)) {
+    throw new ManifestError('manifest must declare a subtitleTracks array (may be empty)');
+  }
+  const seen = new Set();
+  const checkIdentity = (track, kind) => {
+    const key = `${kind}|${track.language}|${track.role}`;
+    if (seen.has(key)) {
+      throw new ManifestError(`duplicate ${kind} track for ${track.language} role ${track.role}; identity must be unambiguous`);
+    }
+    seen.add(key);
+  };
   for (const track of m.audioTracks) {
-    if (!track.id || !track.language) {
-      throw new ManifestError(`audio track missing id/language: ${JSON.stringify(track)}`);
-    }
-    if (seenLanguages.has(track.language)) {
-      throw new ManifestError(`duplicate language ${track.language}; language must be unambiguous`);
-    }
-    seenLanguages.add(track.language);
-    if (!track.timeline || typeof track.timeline.startOffset !== 'number' || typeof track.timeline.end !== 'number') {
-      throw new ManifestError(`track ${track.id} must declare explicit timeline startOffset/end`);
-    }
-    if (track.timeline.end <= track.timeline.startOffset) {
-      throw new ManifestError(`track ${track.id} has empty timeline`);
-    }
-    if (!Array.isArray(track.shards) || track.shards.length === 0) {
-      throw new ManifestError(`track ${track.id} declares no shards`);
-    }
-    for (const shard of track.shards) {
-      if (typeof shard.start !== 'number' || typeof shard.duration !== 'number') {
-        throw new ManifestError(`track ${track.id} shard missing explicit start/duration`);
+    validateTrack(track, 'audio');
+    checkIdentity(track, 'audio');
+  }
+  for (const track of m.subtitleTracks) {
+    validateTrack(track, 'subtitle');
+    checkIdentity(track, 'subtitle');
+  }
+  const rules = m.combinationRules?.disallowed;
+  if (rules !== undefined) {
+    if (!Array.isArray(rules)) throw new ManifestError('combinationRules.disallowed must be an array');
+    for (const rule of rules) {
+      if (!rule?.audioRole || !rule?.subtitleRole || !rule?.reason) {
+        throw new ManifestError('each disallowed combination needs audioRole, subtitleRole and reason');
       }
     }
   }
@@ -100,4 +136,18 @@ export function coverageAt(track, time) {
   if (!shard) return { covered: false, reason: 'no-declared-shard' };
   if (shard.missing) return { covered: false, reason: 'declared-missing-shard', shard };
   return { covered: true, shard };
+}
+
+// Role-level combination policy. Subtitle null means "subtitles off" and is
+// compatible with every audio role. The check is deliberately role-based, not
+// language-based: two tracks sharing a language stay independently selectable.
+// Returns { allowed: true } or { allowed: false, reason }.
+export function checkCombination(manifest, audioTrack, subtitleTrack) {
+  if (!audioTrack) throw new ManifestError('combination requires an audio track');
+  if (!subtitleTrack) return { allowed: true };
+  const hit = (manifest.combinationRules?.disallowed ?? [])
+    .find((r) => r.audioRole === audioTrack.role && r.subtitleRole === subtitleTrack.role);
+  return hit
+    ? { allowed: false, reason: hit.reason, rule: { audioRole: hit.audioRole, subtitleRole: hit.subtitleRole } }
+    : { allowed: true };
 }
